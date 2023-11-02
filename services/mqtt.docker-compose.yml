@@ -1,0 +1,53 @@
+version: '3.8'
+services:
+  mqtt-broker:
+    container_name: mqtt-broker
+    image: eclipse-mosquitto
+    restart: unless-stopped
+    volumes:
+      - $config_folder/mqtt/mosquitto-data/data:/mosquitto/data
+      - $config_folder/mqtt/mosquitto-data/log:/mosquitto/log
+      - $config_folder/mqtt/mosquitto-data/config:/mosquitto/config
+    ports:
+      - "1883:1883" # TCP
+      # - "9001:9001" # Websocket
+    command: "mosquitto -c /mosquitto/data/my-mosquitto.conf"
+    # command: "mosquitto -c mosquitto-no-auth.conf "
+    labels:
+      # Watchtower auto update
+      # - "com.centurylinklabs.watchtower.stop-signal=SIGHUP"
+      # - "com.centurylinklabs.watchtower.enable=true"
+      # - "com.centurylinklabs.watchtower.scope=update-prod-interval"
+      # Enable Trafik control
+      - "traefik.enable=true"
+      # Routers Trafik
+      - "traefik.http.routers.mqtt.entrypoints=websecure"
+      - "traefik.http.routers.mqtt.rule=Host(`mqtt${hostname_fqdn}`)"
+      - "traefik.http.routers.mqtt.tls=true"
+      # Service Trafik
+      - "traefik.http.services.mqtt.loadbalancer.server.port=1883"
+
+  zigbee2mqtt:
+    container_name: zigbee2mqtt
+    restart: unless-stopped
+    image: koenkk/zigbee2mqtt
+    volumes:
+      - $config_folder/mqtt/zigbee2mqtt-data:/app/data
+      - /run/udev:/run/udev:ro
+    environment:
+      - TZ=Europe/Zuerich
+    devices:
+      - /dev/serial/by-id/usb-Silicon_Labs_Sonoff_Zigbee_3.0_USB_Dongle_Plus_0001-if00-port0:/dev/ttyACM0
+    labels:
+     # Enable Trafik control
+      - "traefik.enable=true"
+      # Routers Trafik
+      - "traefik.http.routers.z2m.entrypoints=websecure"
+      - "traefik.http.routers.z2m.rule=Host(`z2m${hostname_fqdn}`)"
+      - "traefik.http.routers.z2m.tls=true"
+      # Service Trafik
+      - "traefik.http.services.z2m.loadbalancer.server.port=8080"
+      # Watchtower auto update
+      # - "com.centurylinklabs.watchtower.stop-signal=SIGHUP"
+      # - "com.centurylinklabs.watchtower.enable=true"
+      # - "com.centurylinklabs.watchtower.scope=update-prod-interval"

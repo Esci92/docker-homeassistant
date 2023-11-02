@@ -1,0 +1,29 @@
+####################################
+#   Docker-Compose file            #
+#   C. Escolano - 17.07.2022       #
+####################################
+
+version: '3.9'
+services:
+  homeassistant:
+    container_name: homeassistant
+    image: "ghcr.io/home-assistant/home-assistant:stable"
+    volumes:
+      - ${config_folder}/homeassistant:/config
+      - /etc/localtime:/etc/localtime:ro
+    restart: unless-stopped
+    privileged: true
+    labels:
+     # Enable Trafik control
+      - "traefik.enable=true"
+      # Routers Trafik
+      - "traefik.http.routers.homeassistant.entrypoints=websecure"
+      - "traefik.http.routers.homeassistant.rule=Host(`homeassistant${hostname_fqdn}`)"
+      - "traefik.http.routers.homeassistant.tls=true"
+  #    - 'traefik.http.routers.homeassistant.middlewares=authelia@docker'
+      # Service Trafik
+      - "traefik.http.services.homeassistant.loadbalancer.server.port=8123"
+      # Watchtower auto update
+      # - "com.centurylinklabs.watchtower.stop-signal=SIGHUP"
+      # - "com.centurylinklabs.watchtower.enable=true"
+      # - "com.centurylinklabs.watchtower.scope=update-prod-interval"

@@ -1,0 +1,44 @@
+
+####################################
+#   Docker-Compose file            #
+#   C. Escolano - 09.03.2023       #
+####################################
+
+version: "3.9"
+services:
+
+####################################
+#   Network Services               #
+####################################
+
+# Homeassistant 
+  homeassistant:
+    extends: 
+      file: ./services/homeassistant.docker-compose.yml
+      service: homeassistant
+    labels:
+      # BackupSerivce
+     - "backup-manager-container.enable=true"
+
+# mqtt 
+  mqtt-broker:
+    extends: 
+      file: ./services/mqtt.docker-compose.yml
+      service: mqtt-broker
+    labels:
+      # BackupSerivce
+     - "backup-manager-container.enable=true"
+     - "backup-manager-container.folder=mqtt"
+
+# mqtt 
+  mqtzigbee2mqttt:
+    extends: 
+      file: ./services/mqtt.docker-compose.yml
+      service: zigbee2mqtt
+
+# Backend network
+networks:
+  default:
+    name: my-homelab-backend
+    external: true                            
+        
